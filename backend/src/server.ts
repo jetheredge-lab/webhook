@@ -52,7 +52,7 @@ const buildServer = () => {
     // Register modular business logic routes
     app.register(authRoutes, { prefix: '/api/auth' });
     app.register(userRoutes, { prefix: '/api/users' });
-    app.register(webhookRoutes, { prefix: '/webhook' });
+    app.register(webhookRoutes, { prefix: '/api/webhook' });
     app.register(accountRoutes, { prefix: '/api/accounts' });
     app.register(tradeRoutes, { prefix: '/api/trades' });
     app.register(equityRoutes, { prefix: '/api/equity' });
@@ -81,15 +81,24 @@ const start = async () => {
 
         logger.info(`Tradovate Bridge Backend listening securely on port ${port}`);
 
-        try {
-            // Post-startup Hooks
-            TradovateAuthService.startTokenRefreshCron();
-            await socketService.initializeAllSockets();
-            worker = initOrderWorker();
-            logger.info('Order Execution worker online');
-        } catch (startupErr: any) {
-            logger.error(startupErr.message, 'Non-fatal startup hook error (e.g., DB not migrated yet). Waiting for user action.');
-        }
+        // Post-startup Hooks
+        const runStartupHooks = async (retries = 5) => {
+            try {
+                TradovateAuthService.startTokenRefreshCron();
+                await socketService.initializeAllSockets();
+                worker = initOrderWorker();
+                logger.info('Order Execution worker online');
+            } catch (startupErr: any) {
+                if (retries > 0) {
+                    logger.warn(`Startup hooks failed (${startupErr.message}). Retrying in 5s... (${retries} retries left)`);
+                    setTimeout(() => runStartupHooks(retries - 1), 5000);
+                } else {
+                    logger.error(startupErr, 'Fatal startup hook failure after retries.');
+                }
+            }
+        };
+
+        runStartupHooks();
 
     } catch (err) {
         logger.error(err, 'Fatal initialization error:');

@@ -228,8 +228,8 @@ export const AlertGenerator = () => {
 
                         <div className="mt-8 pt-6 border-t border-slate-800">
                             <h4 className="text-xs font-black font-mono tracking-widest text-slate-500 uppercase mb-4">Webhook Target</h4>
-                            <div className="bg-slate-950 p-3 rounded border border-slate-800 font-mono text-[10px] text-slate-400 break-all">
-                                {webhookUrl}
+                            <div className="flex-1 p-3 bg-slate-900 rounded font-mono text-sm text-green-400 break-all select-all">
+                                {window.location.origin}/api/webhook/tradingview
                             </div>
                             <button
                                 onClick={handleCopyUrl}
