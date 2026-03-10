@@ -80,4 +80,55 @@ export class TradovateOrderService {
             throw err;
         }
     }
+
+    /**
+     * Fetch open positions for a specific account
+     */
+    static async getPositions(systemAccountId: string) {
+        try {
+            const dbAccount = await prisma.account.findUnique({ where: { id: systemAccountId } });
+            if (!dbAccount) return [];
+
+            const client = await this._client(systemAccountId);
+            // Tradovate uses /position/list or /position/deps
+            const res = await client.get(`/position/list`);
+
+            // Filter only positions with quantity != 0
+            const activePositions = res.data.filter((p: any) => p.netPos !== 0);
+
+            // Enrich with symbol data if needed, but usually position contains contractId
+            // Here we just return the raw active positions
+            return activePositions.map((p: any) => ({
+                ...p,
+                accountId: dbAccount.id,
+                accountSpec: dbAccount.accountSpec,
+                tradovateAccountId: dbAccount.tradovateAccountId
+            }));
+        } catch (err: any) {
+            logger.error(`Error fetching positions for ${systemAccountId}:`, err.response?.data || err.message);
+            return [];
+        }
+    }
+
+    /**
+     * Liquidates a specific position
+     */
+    static async liquidatePosition(systemAccountId: string, contractId: number) {
+        try {
+            const dbAccount = await prisma.account.findUnique({ where: { id: systemAccountId } });
+            if (!dbAccount) throw new Error('Account not found');
+
+            const client = await this._client(systemAccountId);
+            const res = await client.post('/order/liquidateposition', {
+                accountId: Number(dbAccount.tradovateAccountId),
+                contractId,
+                admin: false
+            });
+
+            return res.data;
+        } catch (err: any) {
+            logger.error('Error liquidating position', err.response?.data || err.message);
+            throw err;
+        }
+    }
 }

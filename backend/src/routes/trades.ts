@@ -124,4 +124,46 @@ export default async function tradeRoutes(fastify: FastifyInstance) {
         }
     });
 
+    fastify.get('/positions', async (request: FastifyRequest, reply: FastifyReply) => {
+        const { TradovateOrderService } = await import('../services/tradovate/order.service');
+        try {
+            const accounts = await prisma.account.findMany({ where: { isActive: true } });
+            const allPositions = [];
+            for (const acc of accounts) {
+                const positions = await TradovateOrderService.getPositions(acc.id);
+                allPositions.push(...positions);
+            }
+            return reply.send({ success: true, data: allPositions });
+        } catch (e: any) {
+            return reply.status(500).send({ success: false, error: e.message });
+        }
+    });
+
+    fastify.post('/close', async (request: FastifyRequest, reply: FastifyReply) => {
+        const { TradovateOrderService } = await import('../services/tradovate/order.service');
+        const { accountId, contractId } = request.body as { accountId: string; contractId: number };
+        try {
+            await TradovateOrderService.liquidatePosition(accountId, contractId);
+            return reply.send({ success: true, message: 'Liquidation order sent.' });
+        } catch (e: any) {
+            return reply.status(500).send({ success: false, error: e.message });
+        }
+    });
+
+    fastify.post('/close-all', async (request: FastifyRequest, reply: FastifyReply) => {
+        const { TradovateOrderService } = await import('../services/tradovate/order.service');
+        try {
+            const accounts = await prisma.account.findMany({ where: { isActive: true } });
+            for (const acc of accounts) {
+                const positions = await TradovateOrderService.getPositions(acc.id);
+                for (const pos of positions) {
+                    await TradovateOrderService.liquidatePosition(acc.id, pos.contractId);
+                }
+            }
+            return reply.send({ success: true, message: 'Panic liquidation initiated.' });
+        } catch (e: any) {
+            return reply.status(500).send({ success: false, error: e.message });
+        }
+    });
+
 }
