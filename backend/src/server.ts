@@ -81,11 +81,15 @@ const start = async () => {
 
         logger.info(`Tradovate Bridge Backend listening securely on port ${port}`);
 
-        // Post-startup Hooks
-        TradovateAuthService.startTokenRefreshCron();
-        await socketService.initializeAllSockets();
-        worker = initOrderWorker();
-        logger.info('Order Execution worker online');
+        try {
+            // Post-startup Hooks
+            TradovateAuthService.startTokenRefreshCron();
+            await socketService.initializeAllSockets();
+            worker = initOrderWorker();
+            logger.info('Order Execution worker online');
+        } catch (startupErr: any) {
+            logger.error(startupErr.message, 'Non-fatal startup hook error (e.g., DB not migrated yet). Waiting for user action.');
+        }
 
     } catch (err) {
         logger.error(err, 'Fatal initialization error:');
