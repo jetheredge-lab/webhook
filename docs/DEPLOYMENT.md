@@ -79,24 +79,43 @@ cd app
 
 ## Step 5: Configure the Environment Variables
 
-We need to provide all the production secrets explicitly natively outside of version control.
+We need to provide all the production secrets explicitly out of version control. 
 
 ```bash
 # Copy the structure
 cp .env.example .env
 
-# Open it with nano editor
+# Open it with the nano editor
 nano .env
 ```
 
-**Inside the `.env` file, strongly apply the following changes:**
-1. Set `NODE_ENV=production`.
-2. Generate strong secure hashes for both `APP_SECRET` and `WEBHOOK_SECRET`. (You can run `openssl rand -hex 32` in your terminal to generate one).
-3. Update `DATABASE_URL` password section into something extremely secure mapping to `POSTGRES_PASSWORD`.
-   *Example: `DATABASE_URL=postgresql://production_user:super_secure_password123@postgres:5432/tradovate_prod?schema=public`*
-4. Ensure `DOMAIN` matches the DNS you set up previously. (e.g., `DOMAIN=trading.yourdomain.com`).
+**Inside the `.env` file, apply the following changes:**
 
-Save and close the file (`CTRL+O`, `Enter`, `CTRL+X`).
+**1. Application Setup:**
+- Change `NODE_ENV=development` to `NODE_ENV=production`.
+
+**2. Cryptographic Secrets (CRITICAL SECURITY):**
+- Generate strong, completely randomized 32-character secure hashes for both `APP_SECRET` and `WEBHOOK_SECRET`. 
+- *(Pro Tip: Keep the terminal open with nano, duplicate your SSH connection in another window, and run `openssl rand -hex 32` twice. Copy those strings and paste them here).*
+- `APP_SECRET`: This encrypts your system tokens and Tradovate API keys inside Postgres. Make it very secure.
+- `WEBHOOK_SECRET`: This acts as a password for TradingView to authorize webhooks securely. Remember this exact string, as you'll attach it to all TradingView alerts later.
+
+**3. Database Configuration:**
+- Locate the `DATABASE_URL=postgresql://user:pass@localhost:5432/tradovate_bridge` line.
+- Since we are using Docker Compose, the host must be `postgres` rather than `localhost`.
+- Change `user` to a strong unique username, and `pass` to a complex highly-secure password. 
+- *Example: `DATABASE_URL=postgresql://trading_admin_user:E2jLk9s8PzN4vQx1@postgres:5432/tradovate_bridge`*
+- **Important:** Whatever user and pass you decide here MUST perfectly match the `POSTGRES_USER` and `POSTGRES_PASSWORD` mappings found inside `docker-compose.prod.yml` later on!
+
+**4. Initial System Admin Account:**
+- `DASHBOARD_USERNAME`: Choose an initial operator ID (e.g., `admin`).
+- `DASHBOARD_PASSWORD`: Pick a strong password. You will use these exact credentials to log into the frontend dashboard the very first time. (You can change/reset this later through the system UI).
+
+**5. SSL/Domain Mappings (Prod Only):**
+- Update `DOMAIN=your-domain.com` to exactly match your DNS records (e.g., `DOMAN=trading.yourdomain.com`). Nginx requires this internally to resolve incoming alerts correctly.
+- Update `CERTBOT_EMAIL` to a real email address so Let's Encrypt can notify you before your free SSL certificates expire.
+
+Once you have configured everything, save and close the file (`CTRL+O` to write, `Enter` to confirm, then `CTRL+X` to exit nano).
 
 ---
 
