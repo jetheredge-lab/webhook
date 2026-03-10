@@ -8,7 +8,10 @@ export const webhookPayloadSchema = z.object({
     symbol: z.string(),
     date: z.string().optional(),
     data: z.string().optional(),
-    quantity: z.union([z.number(), z.string()]),
+    quantity: z.union([
+        z.number().positive(),
+        z.string().regex(/^\d+$/).transform(Number)
+    ]),
     risk_percentage: z.number().optional().default(0),
     price: z.union([z.number(), z.string()]).optional().nullable(),
     tp: z.number().optional().default(0),
