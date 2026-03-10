@@ -40,4 +40,19 @@ export default async function webhookRoutes(fastify: FastifyInstance) {
             return reply.status(500).send({ success: false, error: 'Internal Server Error' });
         }
     });
+
+    // GET /api/webhook/recent
+    fastify.get('/recent', async (request: FastifyRequest, reply: FastifyReply) => {
+        const { PrismaClient } = await import('@prisma/client');
+        const prisma = new PrismaClient();
+        try {
+            const alerts = await prisma.webhookAlert.findMany({
+                take: 20,
+                orderBy: { receivedAt: 'desc' }
+            });
+            return reply.send({ success: true, data: alerts });
+        } catch (e: any) {
+            return reply.status(500).send({ success: false, error: e.message });
+        }
+    });
 }

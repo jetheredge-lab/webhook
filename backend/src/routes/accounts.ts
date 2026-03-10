@@ -58,4 +58,20 @@ export default async function accountRoutes(fastify: FastifyInstance) {
             return reply.status(500).send({ success: false, error: e.message });
         }
     });
+
+    // POST /api/accounts/:id/test
+    fastify.post('/:id/test', async (request: FastifyRequest, reply: FastifyReply) => {
+        const { id } = request.params as { id: string };
+        const { TradovateAuthService } = await import('../services/tradovate/auth.service');
+        try {
+            await TradovateAuthService.getAccessToken(id, true); // Force refresh to test keys
+            return reply.send({ success: true, message: 'Connection Successful!' });
+        } catch (e: any) {
+            return reply.status(401).send({
+                success: false,
+                message: 'Authentication Failed. Check your API Key (Name) and Secret (Password).',
+                details: e.response?.data || e.message
+            });
+        }
+    });
 }

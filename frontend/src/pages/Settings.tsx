@@ -125,12 +125,38 @@ export const Settings = () => {
                                             </div>
                                             <p className="text-xs font-mono text-slate-500 mt-1">ID: {acc.tradovateAccountId} | Spec: {acc.accountSpec}</p>
                                         </div>
-                                        <button
-                                            onClick={() => handleDeleteAccount(acc.id)}
-                                            className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                                        >
-                                            <Trash size={18} />
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={async (e) => {
+                                                    const btn = e.currentTarget;
+                                                    btn.disabled = true;
+                                                    const originalText = btn.innerText;
+                                                    btn.innerText = 'TESTING...';
+                                                    try {
+                                                        const res = await fetch(`${BASE_URL}/api/accounts/${acc.id}/test`, {
+                                                            method: 'POST',
+                                                            headers: { Authorization: `Bearer ${token}` }
+                                                        });
+                                                        const d = await res.json();
+                                                        alert(d.message);
+                                                    } catch (err) {
+                                                        alert('Connection Failed');
+                                                    } finally {
+                                                        btn.disabled = false;
+                                                        btn.innerText = originalText;
+                                                    }
+                                                }}
+                                                className="text-[10px] font-mono border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 transition-colors"
+                                            >
+                                                TEST
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteAccount(acc.id)}
+                                                className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                                            >
+                                                <Trash size={18} />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))
                             )}
