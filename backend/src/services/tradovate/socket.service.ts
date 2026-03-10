@@ -13,11 +13,20 @@ export class TradovateSocketService {
      * Initializes WebSocket connections across all active stored accounts
      */
     async initializeAllSockets() {
-        const activeAccounts = await prisma.account.findMany({ where: { isActive: true } });
-        logger.info(`Initializing WebSockets for ${activeAccounts.length} accounts`);
+        try {
+            const activeAccounts = await prisma.account.findMany({ where: { isActive: true } });
+            logger.info(`Initializing WebSockets for ${activeAccounts.length} accounts`);
 
-        for (const account of activeAccounts) {
-            await this.connectSocket(account.id);
+            for (const account of activeAccounts) {
+                await this.connectSocket(account.id);
+            }
+        } catch (error: any) {
+            if (error.code === 'P2021' || error.message?.includes('does not exist')) {
+                logger.warn('Skipping Socket initialization: Database not migrated yet.');
+                return;
+            }
+            logger.error(error, `Socket Initialization failed.`);
+            throw error;
         }
     }
 
