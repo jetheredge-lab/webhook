@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import { logger } from '../utils/logger';
 
 const prisma = new PrismaClient();
 
@@ -25,5 +26,36 @@ export default async function accountRoutes(fastify: FastifyInstance) {
         }
     });
 
-    // Basic CRUD placeholders for expansion
+    // POST /api/accounts
+    fastify.post('/', async (request: FastifyRequest, reply: FastifyReply) => {
+        try {
+            const body = request.body as any;
+            const account = await prisma.account.create({
+                data: {
+                    tradovateAccountId: body.tradovateAccountId,
+                    accountSpec: body.accountSpec,
+                    name: body.name || body.accountSpec,
+                    type: body.type || 'DEMO',
+                    apiKey: body.apiKey,
+                    apiSecret: body.apiSecret, // In production, encrypt this
+                    isActive: true
+                }
+            });
+            return reply.send({ success: true, data: account });
+        } catch (e: any) {
+            logger.error(e, 'Failed to create account');
+            return reply.status(500).send({ success: false, error: e.message });
+        }
+    });
+
+    // DELETE /api/accounts/:id
+    fastify.delete('/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+        try {
+            const { id } = request.params as { id: string };
+            await prisma.account.delete({ where: { id } });
+            return reply.send({ success: true });
+        } catch (e: any) {
+            return reply.status(500).send({ success: false, error: e.message });
+        }
+    });
 }

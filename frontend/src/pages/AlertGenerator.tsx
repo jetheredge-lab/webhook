@@ -1,69 +1,87 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash, Copy, CheckCircle, Code, ShieldCheck } from 'lucide-react';
+import { Plus, Trash, Copy, CheckCircle, Code, ShieldCheck, Database, Link as LinkIcon } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
-interface TradovateAccount {
+interface DBAccount {
     id: string;
-    token: string;
-    account_id: string;
+    tradovateAccountId: string;
+    accountSpec: string;
+    name: string;
+    type: 'LIVE' | 'DEMO';
+}
+
+interface SelectedAccount {
+    account_id: string; // The Tradovate Account ID
+    name: string;
     risk_percentage: number;
     quantity_multiplier: number;
 }
 
 export const AlertGenerator = () => {
+    const { token } = useAuthStore();
     const [strategy, setStrategy] = useState('STRATEGY');
-    const [strategyName, setStrategyName] = useState('Alpha_Release_1');
+    const [strategyName, setStrategyName] = useState('Alpha_Alpha_1');
     const [symbol, setSymbol] = useState('{{ticker}}');
     const [multipleExits, setMultipleExits] = useState('YES');
 
-    const [accounts, setAccounts] = useState<TradovateAccount[]>([
-        {
-            id: '1',
-            token: 'pb2b2db618dea3a56487e9',
-            account_id: 'APEX5103100000001',
-            risk_percentage: 0,
-            quantity_multiplier: 1
-        }
-    ]);
-
-    const { token } = useAuthStore();
+    const [availableAccounts, setAvailableAccounts] = useState<DBAccount[]>([]);
+    const [selectedAccounts, setSelectedAccounts] = useState<SelectedAccount[]>([]);
     const [webhookSecret, setWebhookSecret] = useState('REPLACE_WITH_WEBHOOK_SECRET');
-
-    useEffect(() => {
-        const BASE_URL = import.meta.env.VITE_API_URL || '';
-        fetch(`${BASE_URL}/api/auth/webhook-secret`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(r => r.json())
-            .then(d => {
-                if (d.success) setWebhookSecret(d.secret);
-            })
-            .catch(console.error);
-    }, [token]);
 
     const [copiedJson, setCopiedJson] = useState(false);
     const [copiedUrl, setCopiedUrl] = useState(false);
 
+    const BASE_URL = import.meta.env.VITE_API_URL || '';
     const webhookUrl = `${window.location.protocol}//${window.location.hostname}/webhook/tradingview`;
 
-    const addAccount = () => {
-        const newAccount: TradovateAccount = {
-            id: Math.random().toString(36).substr(2, 9),
-            token: '',
-            account_id: '',
-            risk_percentage: 0,
-            quantity_multiplier: 1
-        };
-        setAccounts([...accounts, newAccount]);
+    useEffect(() => {
+        // Fetch Webhook Secret
+        fetch(`${BASE_URL}/api/auth/webhook-secret`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(r => r.json())
+            .then(d => { if (d.success) setWebhookSecret(d.secret); })
+            .catch(console.error);
+
+        // Fetch DB Accounts
+        fetch(`${BASE_URL}/api/accounts`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    setAvailableAccounts(d.data);
+                    // Default select the first one if it exists
+                    if (d.data.length > 0 && selectedAccounts.length === 0) {
+                        setSelectedAccounts([{
+                            account_id: d.data[0].tradovateAccountId,
+                            name: d.data[0].name,
+                            risk_percentage: 0,
+                            quantity_multiplier: 1
+                        }]);
+                    }
+                }
+            })
+            .catch(console.error);
+    }, [token]);
+
+    const toggleAccountSelection = (acc: DBAccount) => {
+        const isSelected = selectedAccounts.some(a => a.account_id === acc.tradovateAccountId);
+        if (isSelected) {
+            setSelectedAccounts(selectedAccounts.filter(a => a.account_id !== acc.tradovateAccountId));
+        } else {
+            setSelectedAccounts([...selectedAccounts, {
+                account_id: acc.tradovateAccountId,
+                name: acc.name,
+                risk_percentage: 0,
+                quantity_multiplier: 1
+            }]);
+        }
     };
 
-    const removeAccount = (id: string) => {
-        setAccounts(accounts.filter(a => a.id !== id));
-    };
-
-    const updateAccount = (id: string, field: keyof TradovateAccount, value: string | number) => {
-        setAccounts(accounts.map(acc =>
-            acc.id === id ? { ...acc, [field]: value } : acc
+    const updateSelectedAccount = (accountId: string, field: keyof SelectedAccount, value: any) => {
+        setSelectedAccounts(selectedAccounts.map(acc =>
+            acc.account_id === accountId ? { ...acc, [field]: value } : acc
         ));
     };
 
@@ -74,28 +92,9 @@ export const AlertGenerator = () => {
             date: "{{timenow}}",
             data: "{{strategy.order.action}}",
             quantity: "{{strategy.order.contracts}}",
-            risk_percentage: 0,
             price: "{{close}}",
-            tp: 0,
-            percentage_tp: 0,
-            dollar_tp: 0,
-            sl: 0,
-            dollar_sl: 0,
-            percentage_sl: 0,
-            trail: 0,
-            trail_stop: 0,
-            trail_trigger: 0,
-            trail_freq: 0,
-            update_tp: false,
-            update_sl: false,
-            breakeven: 0,
-            breakeven_offset: 0,
-            token: accounts.length > 0 ? accounts[0].token : "",
-            pyramid: true,
-            same_direction_ignore: false,
-            reverse_order_close: false,
             strategy: strategyName,
-            multiple_accounts: accounts.map(({ id, ...rest }) => rest)
+            multiple_accounts: selectedAccounts.map(({ name, ...rest }) => rest)
         }, null, 2);
     };
 
@@ -115,198 +114,141 @@ export const AlertGenerator = () => {
         <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl">
             <header>
                 <h2 className="text-4xl font-mono font-black text-primary tracking-tighter uppercase">Alert Generator</h2>
-                <p className="text-muted mt-2 font-mono text-sm">Configure and map signals across routing engines dynamically.</p>
+                <p className="text-muted mt-2 font-mono text-sm">Map TradingView signals directly to your broker accounts.</p>
             </header>
 
-            {/* TradingView Info */}
-            <section className="glass-card">
-                <h3 className="text-xl font-bold font-mono text-primary mb-6">TradingView Info</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 font-mono mb-2">Select TradingView Strategy / Indicator</label>
-                        <select
-                            value={strategy}
-                            onChange={(e) => setStrategy(e.target.value)}
-                            className="w-full p-3 border border-slate-200 rounded font-mono text-sm bg-slate-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                        >
-                            <option value="STRATEGY">STRATEGY</option>
-                            <option value="INDICATOR">INDICATOR</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 font-mono mb-2">Strategy / Bot Name</label>
-                        <input
-                            type="text"
-                            value={strategyName}
-                            onChange={(e) => setStrategyName(e.target.value)}
-                            placeholder="e.g. Breakout_Bot_V1"
-                            className="w-full p-3 border border-slate-200 rounded font-mono text-sm bg-slate-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 font-mono mb-2">TradingView Symbol</label>
-                        <input
-                            type="text"
-                            value={symbol}
-                            onChange={(e) => setSymbol(e.target.value)}
-                            className="w-full p-3 border border-slate-200 rounded font-mono text-sm bg-slate-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 font-mono mb-2 flex items-center gap-2">
-                            <ShieldCheck size={14} className="text-green-500" /> Webhook Secret
-                        </label>
-                        <input
-                            type="text"
-                            value={webhookSecret}
-                            onChange={(e) => setWebhookSecret(e.target.value)}
-                            className="w-full p-3 border border-slate-200 rounded font-mono text-sm bg-slate-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                        />
-                        <p className="text-[10px] text-slate-400 mt-1 font-mono uppercase tracking-tighter">This must match your server's WEBHOOK_SECRET exactly.</p>
-                    </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                    {/* TradingView Config */}
+                    <section className="glass-card">
+                        <h3 className="text-xl font-bold font-mono text-primary mb-6 flex items-center gap-2">
+                            <Code size={20} /> Signal Config
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-400 font-mono uppercase mb-2">Strategy Name</label>
+                                <input
+                                    type="text"
+                                    value={strategyName}
+                                    onChange={(e) => setStrategyName(e.target.value)}
+                                    className="w-full p-3 border border-slate-200 rounded font-mono text-sm bg-slate-50 focus:border-primary outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-400 font-mono uppercase mb-2">Symbol (Ticker)</label>
+                                <input
+                                    type="text"
+                                    value={symbol}
+                                    onChange={(e) => setSymbol(e.target.value)}
+                                    className="w-full p-3 border border-slate-200 rounded font-mono text-sm bg-slate-50 focus:border-primary outline-none"
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Account Selection Mapping */}
+                    <section className="glass-card">
+                        <h3 className="text-xl font-bold font-mono text-primary mb-6 flex items-center gap-2">
+                            <LinkIcon size={20} /> Broker Mapping
+                        </h3>
+
+                        <div className="space-y-6">
+                            <p className="text-xs font-mono text-slate-500">Select which linked accounts should trade when this signal triggers.</p>
+
+                            <div className="grid grid-cols-1 gap-3">
+                                {availableAccounts.map(acc => {
+                                    const selected = selectedAccounts.find(s => s.account_id === acc.tradovateAccountId);
+                                    return (
+                                        <div key={acc.id} className={`p-4 border rounded-lg transition-all ${selected ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-100'}`}>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!selected}
+                                                        onChange={() => toggleAccountSelection(acc)}
+                                                        className="w-4 h-4 accent-primary"
+                                                    />
+                                                    <div>
+                                                        <span className="font-bold font-mono text-sm">{acc.name}</span>
+                                                        <span className="text-[10px] ml-2 font-mono text-slate-400">({acc.tradovateAccountId})</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {selected && (
+                                                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-primary/10">
+                                                    <div>
+                                                        <label className="block text-[9px] font-bold text-slate-500 font-mono uppercase">Qty Multiplier</label>
+                                                        <input
+                                                            type="number"
+                                                            value={selected.quantity_multiplier}
+                                                            onChange={e => updateSelectedAccount(acc.tradovateAccountId, 'quantity_multiplier', Number(e.target.value))}
+                                                            className="w-full bg-white p-2 border rounded text-xs font-mono mt-1"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[9px] font-bold text-slate-500 font-mono uppercase">Risk % Offset</label>
+                                                        <input
+                                                            type="number"
+                                                            value={selected.risk_percentage}
+                                                            onChange={e => updateSelectedAccount(acc.tradovateAccountId, 'risk_percentage', Number(e.target.value))}
+                                                            className="w-full bg-white p-2 border rounded text-xs font-mono mt-1"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                                {availableAccounts.length === 0 && (
+                                    <div className="p-8 text-center border-2 border-dashed border-slate-100 rounded">
+                                        <p className="text-sm font-mono text-slate-400">No accounts found in Settings.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </section>
                 </div>
-            </section>
 
-            {/* Exit Strategy Type */}
-            <section className="glass-card">
-                <h3 className="text-xl font-bold font-mono text-primary mb-6">Exit Strategy Type</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 font-mono mb-2">Would your strategy have multiple exit like TP1, TP2 etc ?</label>
-                        <select
-                            value={multipleExits}
-                            onChange={(e) => setMultipleExits(e.target.value)}
-                            className="w-full p-3 border border-slate-200 rounded font-mono text-sm bg-slate-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                        >
-                            <option value="YES">YES</option>
-                            <option value="NO">NO</option>
-                        </select>
-                    </div>
-                    <div className="text-sm font-mono text-slate-500 bg-slate-50 p-4 border border-slate-100 rounded">
-                        If your strategy has multiple take profits, it can be automated. However, you can't attach take profit or stop loss directly to the entry order natively.
-                    </div>
-                </div>
-
-                <button className="text-accent underline font-mono text-sm mt-6 hover:text-yellow-600">Show Advanced Options</button>
-            </section>
-
-            {/* Added Tradovate Accounts */}
-            <section className="glass-card">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold font-mono text-primary">Added Tradovate Accounts</h3>
-                    <button onClick={addAccount} className="btn-accent flex items-center gap-2">
-                        <Plus size={16} /> ADD ACCOUNT
-                    </button>
-                </div>
-
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left font-mono text-sm">
-                        <thead>
-                            <tr className="border-b border-slate-200 text-slate-500">
-                                <th className="py-4 px-2">TOKEN</th>
-                                <th className="py-4 px-2">ACCOUNT ID / NAME</th>
-                                <th className="py-4 px-2">RISK %</th>
-                                <th className="py-4 px-2">QTY MULTIPLIER</th>
-                                <th className="py-4 px-2 text-right">ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {accounts.map((acc) => (
-                                <tr key={acc.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                                    <td className="py-3 px-2">
-                                        <input
-                                            type="text"
-                                            value={acc.token}
-                                            onChange={(e) => updateAccount(acc.id, 'token', e.target.value)}
-                                            placeholder="e.g. pb2b..."
-                                            className="w-full p-2 border border-slate-200 rounded text-xs bg-white"
-                                        />
-                                    </td>
-                                    <td className="py-3 px-2">
-                                        <input
-                                            type="text"
-                                            value={acc.account_id}
-                                            onChange={(e) => updateAccount(acc.id, 'account_id', e.target.value)}
-                                            placeholder="e.g. APEX..."
-                                            className="w-full p-2 border border-slate-200 rounded text-xs bg-white"
-                                        />
-                                    </td>
-                                    <td className="py-3 px-2 w-24">
-                                        <input
-                                            type="number"
-                                            value={acc.risk_percentage}
-                                            onChange={(e) => updateAccount(acc.id, 'risk_percentage', Number(e.target.value))}
-                                            className="w-full p-2 border border-slate-200 rounded text-xs bg-white"
-                                        />
-                                    </td>
-                                    <td className="py-3 px-2 w-32">
-                                        <input
-                                            type="number"
-                                            value={acc.quantity_multiplier}
-                                            onChange={(e) => updateAccount(acc.id, 'quantity_multiplier', Number(e.target.value))}
-                                            className="w-full p-2 border border-slate-200 rounded text-xs bg-white"
-                                        />
-                                    </td>
-                                    <td className="py-3 px-2 text-right">
-                                        <button
-                                            onClick={() => removeAccount(acc.id)}
-                                            className="p-2 text-red-500 hover:bg-red-50 rounded transition-colors"
-                                        >
-                                            <Trash size={16} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {accounts.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="py-8 text-center text-muted border-b border-slate-100">
-                                        No accounts attached. Add accounts mapping to attach signal logic.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            {/* Final JSON Output */}
-            <section className="glass-card bg-slate-900 text-slate-300">
-                <div className="flex flex-col md:flex-row gap-6 mb-6 pb-6 border-b border-slate-800">
-                    <div className="flex-1">
-                        <h4 className="text-sm font-bold font-mono tracking-widest text-slate-400 mb-2">TARGET WEBHOOK URL</h4>
-                        <div className="flex gap-2">
-                            <input
-                                readOnly
-                                value={webhookUrl}
-                                className="w-full bg-slate-950 border border-slate-800 rounded p-3 font-mono text-sm text-green-400 outline-none"
-                            />
+                {/* Sidebar Output */}
+                <div className="space-y-8">
+                    <section className="glass-card bg-slate-900 border-none shadow-2xl">
+                        <div className="flex items-center justify-between mb-6">
+                            <h4 className="text-xs font-black font-mono tracking-widest text-slate-500 uppercase">Alert Payload</h4>
                             <button
-                                onClick={handleCopyUrl}
-                                className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded transition-colors flex items-center gap-2 font-mono text-sm whitespace-nowrap"
+                                onClick={handleCopyJson}
+                                className="text-accent hover:text-white transition-colors"
                             >
-                                {copiedUrl ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />} COPY URL
+                                {copiedJson ? <CheckCircle size={18} /> : <Copy size={18} />}
                             </button>
                         </div>
+                        <pre className="text-[10px] font-mono text-green-400 leading-relaxed overflow-x-auto">
+                            {generateJson()}
+                        </pre>
+
+                        <div className="mt-8 pt-6 border-t border-slate-800">
+                            <h4 className="text-xs font-black font-mono tracking-widest text-slate-500 uppercase mb-4">Webhook Target</h4>
+                            <div className="bg-slate-950 p-3 rounded border border-slate-800 font-mono text-[10px] text-slate-400 break-all">
+                                {webhookUrl}
+                            </div>
+                            <button
+                                onClick={handleCopyUrl}
+                                className="w-full mt-3 py-2 bg-slate-800 text-xs font-mono text-white rounded hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+                            >
+                                {copiedUrl ? <CheckCircle size={14} className="text-green-400" /> : <Copy size={14} />} COPY WEBHOOK URL
+                            </button>
+                        </div>
+                    </section>
+
+                    <div className="glass-card bg-primary text-white p-6">
+                        <ShieldCheck className="mb-4 opacity-50" size={32} />
+                        <h4 className="font-bold font-mono text-sm leading-tight uppercase">Security Notice</h4>
+                        <p className="text-[11px] font-mono mt-2 opacity-80 leading-relaxed">
+                            The "secret" field in the JSON payload is your unique server key. Without it, the backend will drop any incoming signals immediately.
+                        </p>
                     </div>
                 </div>
-
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold font-mono text-white flex items-center gap-2">
-                        <Code size={18} className="text-accent" /> TRADINGVIEW JSON PAYLOAD
-                    </h3>
-                    <button
-                        onClick={handleCopyJson}
-                        className="bg-accent text-white px-6 py-2 rounded transition-colors flex items-center gap-2 font-mono text-sm font-bold hover:bg-yellow-700"
-                    >
-                        {copiedJson ? <CheckCircle size={16} /> : <Copy size={16} />} COPY PAYLOAD
-                    </button>
-                </div>
-
-                <pre className="bg-slate-950 p-6 rounded border border-slate-800 overflow-x-auto text-sm font-mono leading-relaxed text-green-400">
-                    {generateJson()}
-                </pre>
-            </section>
-
+            </div>
         </div>
     );
 };
