@@ -100,12 +100,18 @@ nano .env
 - `APP_SECRET`: This encrypts your system tokens and Tradovate API keys inside Postgres. Make it very secure.
 - `WEBHOOK_SECRET`: This acts as a password for TradingView to authorize webhooks securely. Remember this exact string, as you'll attach it to all TradingView alerts later.
 
-**3. Database Configuration:**
+**3. Database Configuration (Postgres & Redis):**
 - Locate the `DATABASE_URL=postgresql://user:pass@localhost:5432/tradovate_bridge` line.
 - Since we are using Docker Compose, the host must be `postgres` rather than `localhost`.
 - Change `user` to a strong unique username, and `pass` to a complex highly-secure password. 
-- *Example: `DATABASE_URL=postgresql://trading_admin_user:E2jLk9s8PzN4vQx1@postgres:5432/tradovate_bridge`*
-- **Important:** Whatever user and pass you decide here MUST perfectly match the `POSTGRES_USER` and `POSTGRES_PASSWORD` mappings found inside `docker-compose.prod.yml` later on!
+  *Example: `DATABASE_URL=postgresql://production_user:secure_password123@postgres:5432/tradovate_prod`*
+- Additionally, ensure you export those matching credentials directly at the bottom of the `.env` file so the Postgres container knows how to build them:
+  ```env
+  POSTGRES_USER=production_user
+  POSTGRES_PASSWORD=secure_password123
+  POSTGRES_DB=tradovate_prod
+  ```
+- **Redis Component:** Update `REDIS_URL=redis://localhost:6379` to `REDIS_URL=redis://redis:6379` so the backend container finds the internal Redis routing. Add `REDIS_PASSWORD` if your production configuration uses it explicitly.
 
 **4. Initial System Admin Account:**
 - `DASHBOARD_USERNAME`: Choose an initial operator ID (e.g., `admin`).
