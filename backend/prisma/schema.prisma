@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                 String  @id @default(uuid())
+  tradovateAccountId String  @unique
+  accountSpec        String
+  name               String
+  type               AccountType
+  isActive           Boolean @default(true)
+  apiKey             String
+  apiSecret          String  // Stored AES-256 encrypted
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  orders             Order[]
+  trades             Trade[]
+  equitySnapshots    EquitySnapshot[]
+}
+
+enum AccountType {
+  LIVE
+  DEMO
+}
+
+model WebhookAlert {
+  id              String   @id @default(uuid())
+  receivedAt      DateTime @default(now())
+  rawPayload      Json
+  signatureValid  Boolean
+  processed       Boolean  @default(false)
+  processingError String?
+  alertId         String   @unique
+  symbol          String
+  action          String
+  quantity        Float
+  orderType       String
+  price           Float?
+  stopLoss        Float?
+  takeProfit      Float?
+  trailStop       Float?
+  strategy        String
+  accountIds      String[]
+
+  orders          Order[]
+}
+
+model Order {
+  id               String   @id @default(uuid())
+  webhookAlertId   String
+  webhookAlert     WebhookAlert @relation(fields: [webhookAlertId], references: [id])
+  tradovateOrderId String?
+  accountId        String
+  account          Account @relation(fields: [accountId], references: [id])
+  symbol           String
+  action           OrderAction
+  quantity         Float
+  orderType        TradovateOrderType
+  limitPrice       Float?
+  stopPrice        Float?
+  status           OrderStatus @default(PENDING)
+  submittedAt      DateTime @default(now())
+  filledAt         DateTime?
+  avgFillPrice     Float?
+  commission       Float?
+  slippage         Float?
+  isAutomated      Boolean @default(true)
+  notes            String?
+
+  trades           Trade[]
+}
+
+enum OrderAction {
+  BUY
+  SELL
+}
+
+enum TradovateOrderType {
+  MARKET
+  LIMIT
+  STOP
+  STOP_LIMIT
+  TRAILING_STOP
+  MIT
+}
+
+enum OrderStatus {
+  PENDING
+  FILLED
+  PARTIALLY_FILLED
+  CANCELLED
+  REJECTED
+}
+
+model Trade {
+  id                    String   @id @default(uuid())
+  orderId               String
+  order                 Order?   @relation(fields: [orderId], references: [id])
+  accountId             String
+  account               Account  @relation(fields: [accountId], references: [id])
+  symbol                String
+  direction             TradeDirection
+  entryPrice            Float
+  exitPrice             Float?
+  quantity              Float
+  entryTime             DateTime
+  exitTime              DateTime?
+  grossPnl              Float?
+  netPnl                Float?
+  commission            Float?
+  maxAdverseExcursion   Float?
+  maxFavorableExcursion Float?
+  durationSeconds       Int?
+  strategy              String?
+  tags                  String[]
+}
+
+enum TradeDirection {
+  LONG
+  SHORT
+}
+
+model EquitySnapshot {
+  id                 String   @id @default(uuid())
+  accountId          String
+  account            Account  @relation(fields: [accountId], references: [id])
+  date               DateTime @db.Date
+  startingBalance    Float
+  endingBalance      Float
+  dailyPnl           Float
+  dailyCommission    Float
+  openPositionCount  Int
+  realizedPnl        Float
+  unrealizedPnl      Float
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String   // bcrypt hash
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}

@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  app-backend:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
+      target: runner
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - APP_SECRET=${APP_SECRET}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+    networks:
+      - tradovate-net
+
+  app-frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+      target: runner
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - tradovate-net
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-production_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-production_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-tradovate_prod}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - tradovate-net
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-prod_redis_pass}
+    volumes:
+      - redisdata:/data
+    networks:
+      - tradovate-net
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - app-backend
+      - app-frontend
+    networks:
+      - tradovate-net
+
+volumes:
+  pgdata:
+  redisdata:
+
+
+networks:
+  tradovate-net:
+    driver: bridge

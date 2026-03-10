@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-text font-sans antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white font-mono px-6 py-3 font-bold hover:bg-slate-800 transition-colors duration-200 cursor-pointer text-sm;
+  }
+  
+  .btn-accent {
+    @apply bg-accent text-white font-mono px-6 py-3 font-bold hover:bg-yellow-700 transition-colors duration-200 cursor-pointer text-sm;
+  }
+
+  .glass-card {
+    @apply bg-white/90 backdrop-blur border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow duration-300;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-3 px-4 py-3 text-slate-400 font-mono text-sm hover:text-white hover:bg-slate-800 transition-colors cursor-pointer;
+  }
+
+  .nav-link-active {
+    @apply flex items-center gap-3 px-4 py-3 bg-slate-800 text-white font-mono text-sm font-bold border-l-4 border-accent cursor-pointer;
+  }
+}
