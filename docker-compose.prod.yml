@@ -12,13 +12,11 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - APP_SECRET=${APP_SECRET}
-      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
     networks:
       - tradovate-net
 
@@ -33,6 +31,8 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+    env_file:
+      - .env
     networks:
       - tradovate-net
 
