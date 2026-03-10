@@ -33,7 +33,7 @@ jobs:
       run: cd backend && npx prisma generate
 
     - name: Run Backend Tests
-      run: cd backend && npx vitest run
+      run: cp .env.example backend/.env && cd backend && npx vitest run
 
     - name: Install dependencies (Frontend)
       run: cd frontend && npm ci
