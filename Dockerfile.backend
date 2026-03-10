@@ -11,19 +11,22 @@ RUN npx tsc
 # Stage 2: Runner
 FROM node:20-slim AS runner
 WORKDIR /app
-# Install openssl for prisma engine
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# Install openssl for prisma engine and curl for healthchecks
+RUN apt-get update && apt-get install -y openssl curl && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 # Prisma engine and schema need to be copied
 COPY --from=builder /app/prisma ./prisma
 
+# Ensure permissions belong to the non-root user
+RUN chown -R node:node /app
+
 # Non-root user
 USER node
 
 HEALTHCHECK --interval=30s --timeout=3s \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+    CMD curl -f http://localhost:3001/health || exit 1
 
 EXPOSE 3001
 CMD ["node", "dist/server.js"]
