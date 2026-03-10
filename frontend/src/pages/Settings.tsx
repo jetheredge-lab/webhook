@@ -16,7 +16,6 @@ export const Settings = () => {
     const [webhookSecret, setWebhookSecret] = useState('****************');
     const [revealSecret, setRevealSecret] = useState(false);
 
-    // Form State
     const [newAcc, setNewAcc] = useState({
         tradovateAccountId: '',
         accountSpec: '',
@@ -24,6 +23,8 @@ export const Settings = () => {
         apiSecret: '',
         type: 'DEMO' as 'LIVE' | 'DEMO'
     });
+    const [testResults, setTestResults] = useState<Record<string, boolean>>({});
+    const [formTestStatus, setFormTestStatus] = useState<'idle' | 'testing' | 'success' | 'fail'>('idle');
 
     const BASE_URL = import.meta.env.VITE_API_URL || '';
 
@@ -116,39 +117,41 @@ export const Settings = () => {
                             ) : (
                                 accounts.map(acc => (
                                     <div key={acc.id} className="glass-card flex items-center justify-between group">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="font-bold font-mono text-primary">{acc.name}</h4>
-                                                <span className={`text-[10px] px-2 py-0.5 rounded font-mono ${acc.type === 'LIVE' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                                                    {acc.type}
-                                                </span>
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-3 h-3 rounded-full ${acc.id in testResults ? (testResults[acc.id] ? 'bg-green-500' : 'bg-red-500 animate-pulse') : 'bg-slate-200'}`} title={acc.id in testResults ? (testResults[acc.id] ? 'Connection Verified' : 'Connection Failed') : 'Not Yet Tested'} />
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="font-bold font-mono text-primary uppercase text-sm tracking-tight">{acc.name}</h4>
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded font-black ${acc.type === 'LIVE' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                        {acc.type}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] font-mono text-slate-500 mt-0.5">ID: {acc.tradovateAccountId} · Spec: {acc.accountSpec}</p>
                                             </div>
-                                            <p className="text-xs font-mono text-slate-500 mt-1">ID: {acc.tradovateAccountId} | Spec: {acc.accountSpec}</p>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-3">
                                             <button
                                                 onClick={async (e) => {
                                                     const btn = e.currentTarget;
                                                     btn.disabled = true;
-                                                    const originalText = btn.innerText;
-                                                    btn.innerText = 'TESTING...';
+                                                    btn.style.opacity = '0.5';
                                                     try {
                                                         const res = await fetch(`${BASE_URL}/api/accounts/${acc.id}/test`, {
                                                             method: 'POST',
                                                             headers: { Authorization: `Bearer ${token}` }
                                                         });
                                                         const d = await res.json();
-                                                        alert(d.message);
+                                                        setTestResults(prev => ({ ...prev, [acc.id]: d.success }));
                                                     } catch (err) {
-                                                        alert('Connection Failed');
+                                                        setTestResults(prev => ({ ...prev, [acc.id]: false }));
                                                     } finally {
                                                         btn.disabled = false;
-                                                        btn.innerText = originalText;
+                                                        btn.style.opacity = '1';
                                                     }
                                                 }}
-                                                className="text-[10px] font-mono border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 transition-colors"
+                                                className="text-[10px] font-mono font-black border border-slate-200 px-3 py-1.5 rounded hover:bg-slate-50 transition-all active:scale-95"
                                             >
-                                                TEST
+                                                VERIFY
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteAccount(acc.id)}
@@ -163,51 +166,91 @@ export const Settings = () => {
                         </div>
 
                         {/* Add Form */}
-                        <div className="glass-card h-fit">
-                            <h4 className="font-bold font-mono text-sm uppercase mb-4 text-primary">Add Connection</h4>
-                            <div className="space-y-3">
-                                <input
-                                    type="text"
-                                    placeholder="Numerical Account ID"
-                                    value={newAcc.tradovateAccountId}
-                                    onChange={e => setNewAcc({ ...newAcc, tradovateAccountId: e.target.value })}
-                                    className="w-full p-2 border rounded text-xs font-mono"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Account Spec (e.g. DEMO_1)"
-                                    value={newAcc.accountSpec}
-                                    onChange={e => setNewAcc({ ...newAcc, accountSpec: e.target.value })}
-                                    className="w-full p-2 border rounded text-xs font-mono"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="API Key / Username"
-                                    value={newAcc.apiKey}
-                                    onChange={e => setNewAcc({ ...newAcc, apiKey: e.target.value })}
-                                    className="w-full p-2 border rounded text-xs font-mono"
-                                />
-                                <input
-                                    type="password"
-                                    placeholder="API Secret / Password"
-                                    value={newAcc.apiSecret}
-                                    onChange={e => setNewAcc({ ...newAcc, apiSecret: e.target.value })}
-                                    className="w-full p-2 border rounded text-xs font-mono"
-                                />
+                        <div className="glass-card h-fit border-primary/20 bg-slate-50/50">
+                            <div className="flex items-center justify-between mb-6">
+                                <h4 className="font-black font-mono text-xs uppercase text-primary tracking-widest">Add Connection</h4>
+                                {formTestStatus !== 'idle' && (
+                                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-black ${formTestStatus === 'success' ? 'bg-green-100 text-green-600' : formTestStatus === 'fail' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400 animate-pulse'}`}>
+                                        {formTestStatus.toUpperCase()}
+                                    </span>
+                                )}
+                            </div>
+                            <div className="space-y-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Account Mapping</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Numerical ID (e.g. 112344)"
+                                        value={newAcc.tradovateAccountId}
+                                        onChange={e => setNewAcc({ ...newAcc, tradovateAccountId: e.target.value })}
+                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Spec Name (e.g. DEMO-1)"
+                                        value={newAcc.accountSpec}
+                                        onChange={e => setNewAcc({ ...newAcc, accountSpec: e.target.value })}
+                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Credentials</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Tradovate Username"
+                                        value={newAcc.apiKey}
+                                        onChange={e => setNewAcc({ ...newAcc, apiKey: e.target.value })}
+                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                    />
+                                    <input
+                                        type="password"
+                                        placeholder="Tradovate Password"
+                                        value={newAcc.apiSecret}
+                                        onChange={e => setNewAcc({ ...newAcc, apiSecret: e.target.value })}
+                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                    />
+                                </div>
+
                                 <select
-                                    className="w-full p-2 border rounded text-xs font-mono bg-white"
+                                    className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono bg-white outline-none focus:ring-1 focus:ring-primary"
                                     value={newAcc.type}
                                     onChange={e => setNewAcc({ ...newAcc, type: e.target.value as 'LIVE' | 'DEMO' })}
                                 >
                                     <option value="DEMO">Simulation (Demo)</option>
                                     <option value="LIVE">Live Trading</option>
                                 </select>
-                                <button
-                                    onClick={handleAddAccount}
-                                    className="btn-primary w-full flex items-center justify-center gap-2 mt-2"
-                                >
-                                    <Plus size={14} /> LINK BROKER
-                                </button>
+
+                                <div className="grid grid-cols-2 gap-2 mt-4">
+                                    <button
+                                        onClick={async () => {
+                                            if (!newAcc.apiKey || !newAcc.apiSecret) return alert('Enter credentials first');
+                                            setFormTestStatus('testing');
+                                            try {
+                                                const res = await fetch(`${BASE_URL}/api/accounts/test-credentials`, {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        Authorization: `Bearer ${token}`
+                                                    },
+                                                    body: JSON.stringify(newAcc)
+                                                });
+                                                const d = await res.json();
+                                                setFormTestStatus(d.success ? 'success' : 'fail');
+                                            } catch (e) {
+                                                setFormTestStatus('fail');
+                                            }
+                                        }}
+                                        className="py-2 border border-slate-200 text-[10px] font-mono font-black uppercase rounded hover:bg-slate-100 transition-all active:scale-95"
+                                    >
+                                        TEST CONNECT
+                                    </button>
+                                    <button
+                                        onClick={handleAddAccount}
+                                        className="btn-primary py-2 text-[10px] font-mono font-black uppercase flex items-center justify-center gap-2"
+                                    >
+                                        <Plus size={14} /> LINK BROKER
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

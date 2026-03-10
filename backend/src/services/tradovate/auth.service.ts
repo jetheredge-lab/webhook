@@ -76,4 +76,25 @@ export class TradovateAuthService {
             }
         });
     }
+
+    /**
+     * Test credentials without needing a DB entry
+     */
+    static async testCredentials(name: string, password: string, isDemo: boolean): Promise<boolean> {
+        const apiUrl = isDemo ? config.TRADOVATE_API_URL_DEMO : config.TRADOVATE_API_URL_LIVE;
+        try {
+            await axios.post(`${apiUrl}/auth/accesstokenrequest`, {
+                name,
+                password,
+                appId: 'SampleApp',
+                appVersion: '1.0',
+                cid: 0,
+                sec: 'change_me'
+            });
+            return true;
+        } catch (error: any) {
+            logger.error('Credential test failed:', error.response?.data || error.message);
+            throw error;
+        }
+    }
 }

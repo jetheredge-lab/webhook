@@ -74,4 +74,21 @@ export default async function accountRoutes(fastify: FastifyInstance) {
             });
         }
     });
+
+    // POST /api/accounts/test-credentials
+    fastify.post('/test-credentials', async (request: FastifyRequest, reply: FastifyReply) => {
+        const { TradovateAuthService } = await import('../services/tradovate/auth.service');
+        const body = request.body as any;
+        try {
+            const isDemo = body.type !== 'LIVE';
+            await TradovateAuthService.testCredentials(body.apiKey, body.apiSecret, isDemo);
+            return reply.send({ success: true, message: 'Credentials Verified!' });
+        } catch (e: any) {
+            return reply.status(401).send({
+                success: false,
+                message: 'Invalid Credentials',
+                details: e.response?.data || e.message
+            });
+        }
+    });
 }
