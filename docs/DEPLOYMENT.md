@@ -152,8 +152,8 @@ Docker will now download `node`, `postgres`, `redis`, and compile your frontend/
 Your database is spinning empty. You need to push your Prisma schema mapping inside the running Backend container.
 
 ```bash
-# 1. Execute prisma migration exclusively against the backend container internally:
-docker compose -f docker-compose.prod.yml exec app-backend npx prisma migrate deploy --preview-feature
+# 1. Push your Prisma Schema safely into the running Postgres instance:
+docker compose -f docker-compose.prod.yml exec app-backend npx prisma db push
 
 # 2. Generate backend types silently
 docker compose -f docker-compose.prod.yml exec app-backend npx prisma generate
