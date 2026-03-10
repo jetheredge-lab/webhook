@@ -9,7 +9,7 @@ export const Dashboard = () => {
     // Mock Socket.io connection logic for the dashboard
     useEffect(() => {
         // In production we hit /socket.io through Nginx, falling back to 3001 if dev
-        const socketUrl = import.meta.env.DEV ? 'http://localhost:3001' : '/';
+        const socketUrl = import.meta.env.DEV ? 'http://localhost:3001' : '';
         const socket = io(socketUrl, { transports: ['websocket'] });
 
         socket.on('connect', () => console.log('Connected to real-time engine'));

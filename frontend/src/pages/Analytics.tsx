@@ -5,7 +5,7 @@ import { LineChart, Filter } from 'lucide-react';
 
 export const Analytics = () => {
     const { token } = useAuthStore();
-    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const BASE_URL = import.meta.env.VITE_API_URL || '';
 
     const [stats, setStats] = useState({
         winRate: '--',
