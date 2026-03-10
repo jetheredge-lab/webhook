@@ -17,8 +17,6 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-production_user}:${POSTGRES_PASSWORD:-prod_secure_pass}@postgres:5432/${POSTGRES_DB:-tradovate_prod}
-      - REDIS_URL=redis://redis:6379
     depends_on:
       - postgres
       - redis
