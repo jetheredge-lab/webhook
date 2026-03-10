@@ -44,7 +44,7 @@ export const AlertGenerator = () => {
     const [copiedJson, setCopiedJson] = useState(false);
     const [copiedUrl, setCopiedUrl] = useState(false);
 
-    const webhookUrl = `${window.location.protocol}//${window.location.hostname}:3001/webhook/tradingview`;
+    const webhookUrl = `${window.location.protocol}//${window.location.hostname}/webhook/tradingview`;
 
     const addAccount = () => {
         const newAccount: TradovateAccount = {
