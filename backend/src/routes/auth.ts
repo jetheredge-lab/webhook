@@ -71,4 +71,14 @@ export default async function authRoutes(fastify: FastifyInstance) {
             return reply.status(401).send({ error: 'Unauthorized' });
         }
     });
+
+    // Provide the Webhook Secret to Authenticated Users
+    fastify.get('/webhook-secret', async (request: FastifyRequest, reply: FastifyReply) => {
+        try {
+            await request.jwtVerify();
+            return reply.send({ success: true, secret: config.WEBHOOK_SECRET });
+        } catch (err) {
+            return reply.status(401).send({ error: 'Unauthorized' });
+        }
+    });
 }

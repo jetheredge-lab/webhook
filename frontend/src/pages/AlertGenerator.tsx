@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Plus, Trash, Copy, CheckCircle, Code } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Trash, Copy, CheckCircle, Code, ShieldCheck } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
 
 interface TradovateAccount {
     id: string;
@@ -24,6 +25,21 @@ export const AlertGenerator = () => {
             quantity_multiplier: 1
         }
     ]);
+
+    const { token } = useAuthStore();
+    const [webhookSecret, setWebhookSecret] = useState('REPLACE_WITH_WEBHOOK_SECRET');
+
+    useEffect(() => {
+        const BASE_URL = import.meta.env.VITE_API_URL || '';
+        fetch(`${BASE_URL}/api/auth/webhook-secret`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) setWebhookSecret(d.secret);
+            })
+            .catch(console.error);
+    }, [token]);
 
     const [copiedJson, setCopiedJson] = useState(false);
     const [copiedUrl, setCopiedUrl] = useState(false);
@@ -53,6 +69,7 @@ export const AlertGenerator = () => {
 
     const generateJson = () => {
         return JSON.stringify({
+            secret: webhookSecret,
             symbol: symbol,
             date: "{{timenow}}",
             data: "{{strategy.order.action}}",
@@ -134,6 +151,18 @@ export const AlertGenerator = () => {
                             onChange={(e) => setSymbol(e.target.value)}
                             className="w-full p-3 border border-slate-200 rounded font-mono text-sm bg-slate-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                         />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 font-mono mb-2 flex items-center gap-2">
+                            <ShieldCheck size={14} className="text-green-500" /> Webhook Secret
+                        </label>
+                        <input
+                            type="text"
+                            value={webhookSecret}
+                            onChange={(e) => setWebhookSecret(e.target.value)}
+                            className="w-full p-3 border border-slate-200 rounded font-mono text-sm bg-slate-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1 font-mono uppercase tracking-tighter">This must match your server's WEBHOOK_SECRET exactly.</p>
                     </div>
                 </div>
             </section>
