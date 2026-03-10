@@ -155,7 +155,7 @@ Docker will now download `node`, `postgres`, `redis`, and compile your frontend/
 
 ---
 
-## Step 8: Execute Database Migrations
+## Step 9: Execute Database Migrations
 
 Your database is spinning empty. You need to push your Prisma schema mapping inside the running Backend container.
 
@@ -167,9 +167,16 @@ docker compose -f docker-compose.prod.yml exec app-backend npx prisma migrate de
 docker compose -f docker-compose.prod.yml exec app-backend npx prisma generate
 ```
 
+> **Troubleshooting Prisma Connection Failures:**
+> If you receive an error stating `Container is restarting` or an `Authentication Failed` error from Postgres, this means your Docker containers started **before** you finished updating the `.env` database passwords, securely locking the previous passwords into the internal Docker Volumes forever. To reset Postgres and apply the new hashes, run this to completely purge the old volumes and rebuild:
+> ```bash
+> docker compose -f docker-compose.prod.yml down -v
+> docker compose -f docker-compose.prod.yml up -d --build
+> ```
+
 ---
 
-## Step 9: Configure Linux Firewall (UFW)
+## Step 10: Configure Linux Firewall (UFW)
 
 Lock down the server tightly maping everything so only web traffic (and SSH) gets through. The internal Docker network will protect Postgres and Redis natively!
 
@@ -184,7 +191,7 @@ ufw enable
 
 ---
 
-## Step 10: Set TradingView Webhook URL
+## Step 11: Set TradingView Webhook URL
 
 Everything is now online, secured behind HTTPS and firing natively into the robust Redis queues.
 

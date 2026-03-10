@@ -17,6 +17,11 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-production_user}:${POSTGRES_PASSWORD:-prod_secure_pass}@postgres:5432/${POSTGRES_DB:-tradovate_prod}?schema=public
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-prod_redis_pass}@redis:6379
+    depends_on:
+      - postgres
+      - redis
     networks:
       - tradovate-net
 
@@ -41,7 +46,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-production_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-production_pass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-prod_secure_pass}
       POSTGRES_DB: ${POSTGRES_DB:-tradovate_prod}
     volumes:
       - pgdata:/var/lib/postgresql/data
