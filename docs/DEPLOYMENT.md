@@ -174,7 +174,6 @@ Lock down the server tightly maping everything so only web traffic (and SSH) get
 
 ```bash
 ufw allow OpenSSH
-ufw allow "Nginx Full"
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw enable
