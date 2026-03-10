@@ -15,11 +15,13 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-production_user}:${POSTGRES_PASSWORD:-prod_secure_pass}@postgres:5432/${POSTGRES_DB:-tradovate_prod}?schema=public}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-production_user}:${POSTGRES_PASSWORD:-prod_secure_pass}@postgres:5432/${POSTGRES_DB:-tradovate_prod}?schema=public
+      - REDIS_URL=redis://redis:6379
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - tradovate-net
 
@@ -36,8 +38,11 @@ services:
           memory: 512M
     env_file:
       - .env
+    command: nginx -g "daemon off;"
     networks:
       - tradovate-net
+    depends_on:
+      - app-backend
 
   postgres:
     image: postgres:16-alpine
@@ -50,6 +55,11 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - tradovate-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-production_user} -d ${POSTGRES_DB:-tradovate_prod}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -58,6 +68,11 @@ services:
       - redisdata:/data
     networks:
       - tradovate-net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   nginx:
     image: nginx:alpine
