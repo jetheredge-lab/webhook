@@ -36,10 +36,10 @@ export class TradovateAuthService {
             const response = await axios.post(`${apiUrl}/auth/accesstokenrequest`, {
                 name: account.apiKey,
                 password: decryptedSecret,
-                appId: 'SampleApp',
-                appVersion: '1.0',
+                appId: '',
+                appVersion: '',
                 cid: 0,
-                sec: 'change_me' // the API docs require identifying app parameters
+                sec: ''
             });
 
             const token = response.data.accessToken;
@@ -50,7 +50,7 @@ export class TradovateAuthService {
             logger.info(`Successfully fetched Tradovate access token for account ${account.accountSpec}`);
             return token;
         } catch (error: any) {
-            logger.error('Failed fetching Tradovate access token:', error.response?.data || error.message);
+            logger.error(error.response?.data || error, 'Failed fetching Tradovate access token:');
             throw error;
         }
     }
@@ -86,14 +86,14 @@ export class TradovateAuthService {
             await axios.post(`${apiUrl}/auth/accesstokenrequest`, {
                 name,
                 password,
-                appId: 'SampleApp',
-                appVersion: '1.0',
+                appId: '',
+                appVersion: '',
                 cid: 0,
-                sec: 'change_me'
+                sec: ''
             });
             return true;
         } catch (error: any) {
-            logger.error('Credential test failed:', error.response?.data || error.message);
+            logger.error(error.response?.data || error, 'Credential test failed:');
             throw error;
         }
     }
