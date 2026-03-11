@@ -41,7 +41,7 @@ const buildServer = () => {
     app.addHook('onRequest', async (request, reply) => {
         const url = request.url;
         // Skip webhooks, health, and auth login
-        if (!url.startsWith('/api') || url.startsWith('/api/auth')) return;
+        if (!url.startsWith('/api') || url.startsWith('/api/auth') || url.startsWith('/api/webhook')) return;
         try {
             await request.jwtVerify();
         } catch (err) {
