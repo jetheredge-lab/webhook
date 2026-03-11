@@ -205,51 +205,73 @@ export const Settings = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Tradovate Login</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Username"
-                                        value={newAcc.apiKey}
-                                        onChange={e => setNewAcc({ ...newAcc, apiKey: e.target.value })}
-                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
-                                    />
-                                    <input
-                                        type="password"
-                                        placeholder="Password"
-                                        value={newAcc.apiSecret}
-                                        onChange={e => setNewAcc({ ...newAcc, apiSecret: e.target.value })}
-                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
-                                    />
-                                </div>
-                                <div className="space-y-1 border-t border-slate-100 pt-3">
-                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Partner / Evaluation Config</label>
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">1. Platform Login (Your Credentials)</label>
+                                    <div className="space-y-2">
                                         <input
                                             type="text"
-                                            placeholder="Partner CID"
-                                            value={newAcc.cid}
-                                            onChange={e => setNewAcc({ ...newAcc, cid: e.target.value })}
+                                            placeholder="Tradovate Username"
+                                            value={newAcc.apiKey}
+                                            onChange={e => setNewAcc({ ...newAcc, apiKey: e.target.value })}
                                             className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
                                         />
                                         <input
-                                            type="text"
-                                            placeholder="Partner Secret (SEC)"
-                                            value={newAcc.sec}
-                                            onChange={e => setNewAcc({ ...newAcc, sec: e.target.value })}
+                                            type="password"
+                                            placeholder="Tradovate Password"
+                                            value={newAcc.apiSecret}
+                                            onChange={e => setNewAcc({ ...newAcc, apiSecret: e.target.value })}
                                             className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
                                         />
                                     </div>
-                                    <p className="text-[9px] text-slate-400 mt-1 font-mono leading-tight">Optional. Leave blank to use retail defaults if your provider didn't give you a CID/SEC.</p>
                                 </div>
 
-                                <select
-                                    className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono bg-white outline-none focus:ring-1 focus:ring-primary"
-                                    value={newAcc.type}
-                                    onChange={e => setNewAcc({ ...newAcc, type: e.target.value as 'LIVE' | 'DEMO' })}
-                                >
-                                    <option value="DEMO">Simulation (Demo)</option>
-                                    <option value="LIVE">Live Trading</option>
-                                </select>
+                                <div className="space-y-1 border-t border-slate-100 pt-3">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] uppercase font-black font-mono text-slate-400">2. App Identification (From APEX/Firm)</label>
+                                        <ShieldCheck size={12} className="text-primary" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <input
+                                                type="text"
+                                                placeholder="CID (Number)"
+                                                value={newAcc.cid}
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    if (val === '' || /^\d+$/.test(val)) {
+                                                        setNewAcc({ ...newAcc, cid: val });
+                                                    }
+                                                }}
+                                                className={`w-full p-2.5 border rounded text-xs font-mono outline-none focus:ring-1 focus:ring-primary ${newAcc.cid && isNaN(Number(newAcc.cid)) ? 'border-red-500' : 'border-slate-200'}`}
+                                            />
+                                            <p className="text-[8px] text-slate-400 mt-0.5">App ID (e.g. 100)</p>
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="text"
+                                                placeholder="SEC (Secret)"
+                                                value={newAcc.sec}
+                                                onChange={e => setNewAcc({ ...newAcc, sec: e.target.value })}
+                                                className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                            />
+                                            <p className="text-[8px] text-slate-400 mt-0.5">App Secret String</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-[9px] text-primary/70 mt-1 font-mono italic">
+                                        Important: These are NOT your login credentials. These are the "Client ID" and "App Secret" provided by your evaluation firm.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-1 border-t border-slate-100 pt-3">
+                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">3. Environment</label>
+                                    <select
+                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono bg-white outline-none focus:ring-1 focus:ring-primary"
+                                        value={newAcc.type}
+                                        onChange={e => setNewAcc({ ...newAcc, type: e.target.value as 'LIVE' | 'DEMO' })}
+                                    >
+                                        <option value="DEMO">Simulation (Demo)</option>
+                                        <option value="LIVE">Live Trading</option>
+                                    </select>
+                                </div>
 
                                 <div className="grid grid-cols-2 gap-2 mt-4">
                                     <button
