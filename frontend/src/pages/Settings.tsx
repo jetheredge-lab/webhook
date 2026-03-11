@@ -27,6 +27,7 @@ export const Settings = () => {
     });
     const [testResults, setTestResults] = useState<Record<string, boolean>>({});
     const [formTestStatus, setFormTestStatus] = useState<'idle' | 'testing' | 'success' | 'fail'>('idle');
+    const [foundAccounts, setFoundAccounts] = useState<any[]>([]);
 
     const BASE_URL = import.meta.env.VITE_API_URL || '';
 
@@ -73,6 +74,7 @@ export const Settings = () => {
             if (data.success) {
                 setAccounts([...accounts, data.data]);
                 setNewAcc({ tradovateAccountId: '', accountSpec: '', apiKey: '', apiSecret: '', cid: '', sec: '', type: 'DEMO' });
+                setFoundAccounts([]);
             }
         } catch (e) {
             console.error('Failed to add account', e);
@@ -254,6 +256,7 @@ export const Settings = () => {
                                         onClick={async () => {
                                             if (!newAcc.apiKey || !newAcc.apiSecret) return alert('Enter credentials first');
                                             setFormTestStatus('testing');
+                                            setFoundAccounts([]);
                                             try {
                                                 const res = await fetch(`${BASE_URL}/api/accounts/test-credentials`, {
                                                     method: 'POST',
@@ -264,7 +267,12 @@ export const Settings = () => {
                                                     body: JSON.stringify(newAcc)
                                                 });
                                                 const d = await res.json();
-                                                setFormTestStatus(d.success ? 'success' : 'fail');
+                                                if (d.success) {
+                                                    setFoundAccounts(d.data || []);
+                                                    setFormTestStatus('success');
+                                                } else {
+                                                    setFormTestStatus('fail');
+                                                }
                                             } catch (e) {
                                                 setFormTestStatus('fail');
                                             }
@@ -280,6 +288,27 @@ export const Settings = () => {
                                         <Plus size={14} /> LINK BROKER
                                     </button>
                                 </div>
+
+                                {foundAccounts.length > 0 && (
+                                    <div className="mt-4 p-3 border border-green-100 bg-green-50/30 rounded-lg animate-in slide-in-from-top-2">
+                                        <label className="text-[9px] uppercase font-black font-mono text-green-600 mb-2 block">Accounts Discovered (Click to Fill)</label>
+                                        <div className="space-y-1">
+                                            {foundAccounts.map((a: any) => (
+                                                <button
+                                                    key={a.id}
+                                                    type="button"
+                                                    onClick={() => setNewAcc({ ...newAcc, tradovateAccountId: String(a.id), accountSpec: a.name })}
+                                                    className="w-full text-left p-2 hover:bg-white border border-transparent hover:border-green-200 rounded transition-all group"
+                                                >
+                                                    <div className="flex justify-between items-center text-[10px] font-mono">
+                                                        <span className="font-bold text-slate-800">{a.name}</span>
+                                                        <span className="text-green-600 font-black">ID: {a.id}</span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
