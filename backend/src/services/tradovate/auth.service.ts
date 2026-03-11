@@ -102,7 +102,13 @@ export class TradovateAuthService {
             return syncRes.data.accounts || [];
 
         } catch (error: any) {
-            logger.error(error.response?.data || error, 'Credential test failed:');
+            const errorDetails = {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message,
+                apiUrl
+            };
+            logger.error(errorDetails, 'Credential test failed with details:');
             throw error;
         }
     }

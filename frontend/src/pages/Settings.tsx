@@ -180,157 +180,139 @@ export const Settings = () => {
                                 )}
                             </div>
                             <div className="space-y-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Account Identifiers</label>
-                                    <div className="space-y-2">
-                                        <div className="relative group">
+                                <div className="space-y-6">
+                                    {/* Step 1: Credentials */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">1</span>
+                                            <label className="text-[10px] uppercase font-black font-mono text-slate-400">Tradovate Login</label>
+                                        </div>
+                                        <div className="space-y-2">
                                             <input
                                                 type="text"
-                                                placeholder="Tradovate Numerical ID (e.g. 1234567)"
-                                                value={newAcc.tradovateAccountId}
-                                                onChange={e => setNewAcc({ ...newAcc, tradovateAccountId: e.target.value })}
+                                                placeholder="Username"
+                                                value={newAcc.apiKey}
+                                                onChange={e => setNewAcc({ ...newAcc, apiKey: e.target.value })}
                                                 className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
                                             />
-                                            <div className="hidden group-hover:block absolute left-0 -top-10 bg-black text-white text-[9px] p-2 rounded z-20 w-64 shadow-xl">
-                                                Tip: Click "Risk Settings" in Tradovate dashboard and find this number at the end of the URL.
-                                            </div>
+                                            <input
+                                                type="password"
+                                                placeholder="Password"
+                                                value={newAcc.apiSecret}
+                                                onChange={e => setNewAcc({ ...newAcc, apiSecret: e.target.value })}
+                                                className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                            />
                                         </div>
-                                        <input
-                                            type="text"
-                                            placeholder="Account Spec (e.g. APEX510310...)"
-                                            value={newAcc.accountSpec}
-                                            onChange={e => setNewAcc({ ...newAcc, accountSpec: e.target.value })}
-                                            className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
-                                        />
                                     </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">1. Platform Login (Your Credentials)</label>
-                                    <div className="space-y-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Tradovate Username"
-                                            value={newAcc.apiKey}
-                                            onChange={e => setNewAcc({ ...newAcc, apiKey: e.target.value })}
-                                            className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
-                                        />
-                                        <input
-                                            type="password"
-                                            placeholder="Tradovate Password"
-                                            value={newAcc.apiSecret}
-                                            onChange={e => setNewAcc({ ...newAcc, apiSecret: e.target.value })}
-                                            className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
-                                        />
-                                    </div>
-                                </div>
 
-                                <div className="space-y-1 border-t border-slate-100 pt-3">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-[10px] uppercase font-black font-mono text-slate-400">2. App Identification (From APEX/Firm)</label>
-                                        <ShieldCheck size={12} className="text-primary" />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div>
+                                    {/* Step 2: Firm Config */}
+                                    <div className="space-y-3 pt-4 border-t border-slate-100">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">2</span>
+                                            <label className="text-[10px] uppercase font-black font-mono text-slate-400">Partner / Evaluation (e.g. APEX)</label>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
                                             <input
                                                 type="text"
-                                                placeholder="CID (Number)"
+                                                placeholder="Client ID (CID)"
                                                 value={newAcc.cid}
                                                 onChange={e => {
                                                     const val = e.target.value;
-                                                    if (val === '' || /^\d+$/.test(val)) {
-                                                        setNewAcc({ ...newAcc, cid: val });
-                                                    }
+                                                    if (val === '' || /^\d+$/.test(val)) setNewAcc({ ...newAcc, cid: val });
                                                 }}
-                                                className={`w-full p-2.5 border rounded text-xs font-mono outline-none focus:ring-1 focus:ring-primary ${newAcc.cid && isNaN(Number(newAcc.cid)) ? 'border-red-500' : 'border-slate-200'}`}
+                                                className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
                                             />
-                                            <p className="text-[8px] text-slate-400 mt-0.5">App ID (e.g. 100)</p>
-                                        </div>
-                                        <div>
                                             <input
                                                 type="text"
-                                                placeholder="SEC (Secret)"
+                                                placeholder="App Secret (SEC)"
                                                 value={newAcc.sec}
                                                 onChange={e => setNewAcc({ ...newAcc, sec: e.target.value })}
                                                 className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
                                             />
-                                            <p className="text-[8px] text-slate-400 mt-0.5">App Secret String</p>
                                         </div>
+                                        <p className="text-[9px] text-slate-400 font-mono italic leading-tight">
+                                            Leave blank for standard retail accounts. For APEX/Eval, find these in your "API Instructions" PDF.
+                                        </p>
                                     </div>
-                                    <p className="text-[9px] text-primary/70 mt-1 font-mono italic">
-                                        Important: These are NOT your login credentials. These are the "Client ID" and "App Secret" provided by your evaluation firm.
-                                    </p>
-                                </div>
 
-                                <div className="space-y-1 border-t border-slate-100 pt-3">
-                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">3. Environment</label>
-                                    <select
-                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono bg-white outline-none focus:ring-1 focus:ring-primary"
-                                        value={newAcc.type}
-                                        onChange={e => setNewAcc({ ...newAcc, type: e.target.value as 'LIVE' | 'DEMO' })}
-                                    >
-                                        <option value="DEMO">Simulation (Demo)</option>
-                                        <option value="LIVE">Live Trading</option>
-                                    </select>
-                                </div>
+                                    {/* Step 3: Environment & Connect */}
+                                    <div className="space-y-3 pt-4 border-t border-slate-100">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">3</span>
+                                            <label className="text-[10px] uppercase font-black font-mono text-slate-400">Connect & Discover</label>
+                                        </div>
+                                        <select
+                                            className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono bg-white outline-none focus:ring-1 focus:ring-primary"
+                                            value={newAcc.type}
+                                            onChange={e => setNewAcc({ ...newAcc, type: e.target.value as 'LIVE' | 'DEMO' })}
+                                        >
+                                            <option value="DEMO">Demo / Evaluation</option>
+                                            <option value="LIVE">Live Trading</option>
+                                        </select>
 
-                                <div className="grid grid-cols-2 gap-2 mt-4">
-                                    <button
-                                        onClick={async () => {
-                                            if (!newAcc.apiKey || !newAcc.apiSecret) return alert('Enter credentials first');
-                                            setFormTestStatus('testing');
-                                            setFoundAccounts([]);
-                                            try {
-                                                const res = await fetch(`${BASE_URL}/api/accounts/test-credentials`, {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                        Authorization: `Bearer ${token}`
-                                                    },
-                                                    body: JSON.stringify(newAcc)
-                                                });
-                                                const d = await res.json();
-                                                if (d.success) {
-                                                    setFoundAccounts(d.data || []);
-                                                    setFormTestStatus('success');
-                                                } else {
+                                        <button
+                                            onClick={async () => {
+                                                if (!newAcc.apiKey || !newAcc.apiSecret) return alert('Enter credentials first');
+                                                setFormTestStatus('testing');
+                                                setFoundAccounts([]);
+                                                try {
+                                                    const res = await fetch(`${BASE_URL}/api/accounts/test-credentials`, {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                            Authorization: `Bearer ${token}`
+                                                        },
+                                                        body: JSON.stringify(newAcc)
+                                                    });
+                                                    const d = await res.json();
+                                                    if (d.success) {
+                                                        setFoundAccounts(d.data || []);
+                                                        setFormTestStatus('success');
+                                                    } else {
+                                                        setFormTestStatus('fail');
+                                                    }
+                                                } catch (e) {
                                                     setFormTestStatus('fail');
                                                 }
-                                            } catch (e) {
-                                                setFormTestStatus('fail');
-                                            }
-                                        }}
-                                        className="py-2 border border-slate-200 text-[10px] font-mono font-black uppercase rounded hover:bg-slate-100 transition-all active:scale-95"
-                                    >
-                                        TEST CONNECT
-                                    </button>
-                                    <button
-                                        onClick={handleAddAccount}
-                                        className="btn-primary py-2 text-[10px] font-mono font-black uppercase flex items-center justify-center gap-2"
-                                    >
-                                        <Plus size={14} /> LINK BROKER
-                                    </button>
-                                </div>
-
-                                {foundAccounts.length > 0 && (
-                                    <div className="mt-4 p-3 border border-green-100 bg-green-50/30 rounded-lg animate-in slide-in-from-top-2">
-                                        <label className="text-[9px] uppercase font-black font-mono text-green-600 mb-2 block">Accounts Discovered (Click to Fill)</label>
-                                        <div className="space-y-1">
-                                            {foundAccounts.map((a: any) => (
-                                                <button
-                                                    key={a.id}
-                                                    type="button"
-                                                    onClick={() => setNewAcc({ ...newAcc, tradovateAccountId: String(a.id), accountSpec: a.name })}
-                                                    className="w-full text-left p-2 hover:bg-white border border-transparent hover:border-green-200 rounded transition-all group"
-                                                >
-                                                    <div className="flex justify-between items-center text-[10px] font-mono">
-                                                        <span className="font-bold text-slate-800">{a.name}</span>
-                                                        <span className="text-green-600 font-black">ID: {a.id}</span>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
+                                            }}
+                                            className="w-full py-3 bg-slate-100 text-[10px] font-mono font-black uppercase rounded hover:bg-slate-200 transition-all active:scale-95"
+                                        >
+                                            {formTestStatus === 'testing' ? 'Connecting...' : 'Fetch Account List'}
+                                        </button>
                                     </div>
-                                )}
+
+                                    {/* Results & Selection */}
+                                    {foundAccounts.length > 0 && (
+                                        <div className="space-y-3 pt-4 border-t border-green-200 animate-in slide-in-from-top-2">
+                                            <label className="text-[10px] uppercase font-black font-mono text-green-600">Discovered Accounts (Click to Select)</label>
+                                            <div className="space-y-1">
+                                                {foundAccounts.map((a: any) => (
+                                                    <button
+                                                        key={a.id}
+                                                        type="button"
+                                                        onClick={() => setNewAcc({ ...newAcc, tradovateAccountId: String(a.id), accountSpec: a.name })}
+                                                        className={`w-full text-left p-2 border rounded transition-all flex justify-between items-center ${newAcc.tradovateAccountId === String(a.id) ? 'bg-green-100 border-green-500' : 'bg-white border-transparent hover:border-green-200'}`}
+                                                    >
+                                                        <span className="text-[10px] font-mono font-bold text-slate-800">{a.name}</span>
+                                                        <span className="text-[9px] font-mono text-green-600 font-black">ID: {a.id}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Step 4: Final Link */}
+                                    {newAcc.tradovateAccountId && (
+                                        <div className="pt-4 animate-in fade-in duration-500">
+                                            <button
+                                                onClick={handleAddAccount}
+                                                className="btn-primary w-full py-3 text-[10px] font-mono font-black uppercase flex items-center justify-center gap-2 shadow-xl shadow-primary/20"
+                                            >
+                                                <Plus size={14} /> Link Account: {newAcc.accountSpec}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
