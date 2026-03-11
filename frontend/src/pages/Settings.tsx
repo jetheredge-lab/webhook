@@ -179,55 +179,65 @@ export const Settings = () => {
                             </div>
                             <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Account Mapping</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Numerical ID (e.g. 112344)"
-                                        value={newAcc.tradovateAccountId}
-                                        onChange={e => setNewAcc({ ...newAcc, tradovateAccountId: e.target.value })}
-                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Spec Name (e.g. DEMO-1)"
-                                        value={newAcc.accountSpec}
-                                        onChange={e => setNewAcc({ ...newAcc, accountSpec: e.target.value })}
-                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
-                                    />
+                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Account Identifiers</label>
+                                    <div className="space-y-2">
+                                        <div className="relative group">
+                                            <input
+                                                type="text"
+                                                placeholder="Tradovate Numerical ID (e.g. 1234567)"
+                                                value={newAcc.tradovateAccountId}
+                                                onChange={e => setNewAcc({ ...newAcc, tradovateAccountId: e.target.value })}
+                                                className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                            />
+                                            <div className="hidden group-hover:block absolute left-0 -top-10 bg-black text-white text-[9px] p-2 rounded z-20 w-64 shadow-xl">
+                                                Tip: Click "Risk Settings" in Tradovate dashboard and find this number at the end of the URL.
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Account Spec (e.g. APEX510310...)"
+                                            value={newAcc.accountSpec}
+                                            onChange={e => setNewAcc({ ...newAcc, accountSpec: e.target.value })}
+                                            className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Credentials</label>
+                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Tradovate Login</label>
                                     <input
                                         type="text"
-                                        placeholder="Tradovate Username"
+                                        placeholder="Username"
                                         value={newAcc.apiKey}
                                         onChange={e => setNewAcc({ ...newAcc, apiKey: e.target.value })}
                                         className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
                                     />
                                     <input
                                         type="password"
-                                        placeholder="Tradovate Password"
+                                        placeholder="Password"
                                         value={newAcc.apiSecret}
                                         onChange={e => setNewAcc({ ...newAcc, apiSecret: e.target.value })}
                                         className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
                                     />
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Partner Config (Optional)</label>
-                                    <input
-                                        type="text"
-                                        placeholder="CID"
-                                        value={newAcc.cid}
-                                        onChange={e => setNewAcc({ ...newAcc, cid: e.target.value })}
-                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="SEC"
-                                        value={newAcc.sec}
-                                        onChange={e => setNewAcc({ ...newAcc, sec: e.target.value })}
-                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
-                                    />
+                                <div className="space-y-1 border-t border-slate-100 pt-3">
+                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Partner / Evaluation Config</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Partner CID"
+                                            value={newAcc.cid}
+                                            onChange={e => setNewAcc({ ...newAcc, cid: e.target.value })}
+                                            className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Partner Secret (SEC)"
+                                            value={newAcc.sec}
+                                            onChange={e => setNewAcc({ ...newAcc, sec: e.target.value })}
+                                            className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                        />
+                                    </div>
+                                    <p className="text-[9px] text-slate-400 mt-1 font-mono leading-tight">Optional. Leave blank to use retail defaults if your provider didn't give you a CID/SEC.</p>
                                 </div>
 
                                 <select
