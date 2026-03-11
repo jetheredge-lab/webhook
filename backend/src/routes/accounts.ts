@@ -38,6 +38,8 @@ export default async function accountRoutes(fastify: FastifyInstance) {
                     type: body.type || 'DEMO',
                     apiKey: body.apiKey,
                     apiSecret: body.apiSecret, // In production, encrypt this
+                    cid: body.cid ? Number(body.cid) : null,
+                    sec: body.sec || null,
                     isActive: true
                 }
             });
@@ -81,7 +83,13 @@ export default async function accountRoutes(fastify: FastifyInstance) {
         const body = request.body as any;
         try {
             const isDemo = body.type !== 'LIVE';
-            const accounts = await TradovateAuthService.testCredentials(body.apiKey, body.apiSecret, isDemo);
+            const accounts = await TradovateAuthService.testCredentials(
+                body.apiKey,
+                body.apiSecret,
+                isDemo,
+                body.cid ? Number(body.cid) : undefined,
+                body.sec || undefined
+            );
             return reply.send({ success: true, message: 'Credentials Verified!', data: accounts });
         } catch (e: any) {
             return reply.status(401).send({

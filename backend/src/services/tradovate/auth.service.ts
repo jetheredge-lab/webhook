@@ -38,8 +38,8 @@ export class TradovateAuthService {
                 password: decryptedSecret,
                 appId: 'SampleApp',
                 appVersion: '1.0',
-                cid: 0,
-                sec: 'change_me'
+                cid: account.cid || 0,
+                sec: account.sec || 'change_me'
             });
 
             const token = response.data.accessToken;
@@ -80,7 +80,7 @@ export class TradovateAuthService {
     /**
      * Test credentials and return available accounts
      */
-    static async testCredentials(name: string, password: string, isDemo: boolean): Promise<any[]> {
+    static async testCredentials(name: string, password: string, isDemo: boolean, cid?: number, sec?: string): Promise<any[]> {
         const apiUrl = isDemo ? config.TRADOVATE_API_URL_DEMO : config.TRADOVATE_API_URL_LIVE;
         try {
             const authRes = await axios.post(`${apiUrl}/auth/accesstokenrequest`, {
@@ -88,8 +88,8 @@ export class TradovateAuthService {
                 password,
                 appId: 'SampleApp',
                 appVersion: '1.0',
-                cid: 0,
-                sec: 'change_me'
+                cid: cid || 0,
+                sec: sec || 'change_me'
             });
 
             const token = authRes.data.accessToken;

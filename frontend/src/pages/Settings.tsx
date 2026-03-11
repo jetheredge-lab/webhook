@@ -21,6 +21,8 @@ export const Settings = () => {
         accountSpec: '',
         apiKey: '',
         apiSecret: '',
+        cid: '',
+        sec: '',
         type: 'DEMO' as 'LIVE' | 'DEMO'
     });
     const [testResults, setTestResults] = useState<Record<string, boolean>>({});
@@ -70,7 +72,7 @@ export const Settings = () => {
             const data = await res.json();
             if (data.success) {
                 setAccounts([...accounts, data.data]);
-                setNewAcc({ tradovateAccountId: '', accountSpec: '', apiKey: '', apiSecret: '', type: 'DEMO' });
+                setNewAcc({ tradovateAccountId: '', accountSpec: '', apiKey: '', apiSecret: '', cid: '', sec: '', type: 'DEMO' });
             }
         } catch (e) {
             console.error('Failed to add account', e);
@@ -207,6 +209,23 @@ export const Settings = () => {
                                         placeholder="Tradovate Password"
                                         value={newAcc.apiSecret}
                                         onChange={e => setNewAcc({ ...newAcc, apiSecret: e.target.value })}
+                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase font-black font-mono text-slate-400">Partner Config (Optional)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="CID"
+                                        value={newAcc.cid}
+                                        onChange={e => setNewAcc({ ...newAcc, cid: e.target.value })}
+                                        className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="SEC"
+                                        value={newAcc.sec}
+                                        onChange={e => setNewAcc({ ...newAcc, sec: e.target.value })}
                                         className="w-full p-2.5 border border-slate-200 rounded text-xs font-mono focus:ring-1 focus:ring-primary outline-none"
                                     />
                                 </div>
