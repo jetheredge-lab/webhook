@@ -20,7 +20,7 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 
 const buildServer = () => {
-    const app = fastify({ logger: false, ignoreTrailingSlash: true });
+    const app = fastify({ logger: false, ignoreTrailingSlash: true, caseSensitive: false });
 
     app.register(cors, { origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'] });
     app.register(helmet, {
