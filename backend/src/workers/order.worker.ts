@@ -42,9 +42,26 @@ export const initOrderWorker = () => {
 
         if (!webhook) throw new Error(`Webhook ${webhookId} not found in DB`);
 
-        for (const sysAccountId of webhook.accountIds) {
+        for (const identifier of webhook.accountIds) {
             try {
-                logger.debug(`Placing mapped order for Account ${sysAccountId}`);
+                // Lookup the correct DB Account using resilient matching (ID, name, or spec)
+                const dbAccount = await prisma.account.findFirst({
+                    where: {
+                        OR: [
+                            { id: identifier },
+                            { name: identifier },
+                            { accountSpec: identifier },
+                            { tradovateAccountId: identifier }
+                        ]
+                    }
+                });
+
+                if (!dbAccount) {
+                    throw new Error(`Account mapping failed. Could not find DB account for identifier: ${identifier}`);
+                }
+
+                const sysAccountId = dbAccount.id;
+                logger.debug(`Placing mapped order for Account ${sysAccountId} (matched via ${identifier})`);
 
                 // Build generic REST payload mapping
                 const payload: PlaceOrderPayload = {
@@ -78,7 +95,7 @@ export const initOrderWorker = () => {
                 });
 
             } catch (err: any) {
-                logger.error(`Failed executing job payload across sysAccount ${sysAccountId}`, err);
+                logger.error(`Failed executing job payload across identifier ${identifier}`, err);
                 throw err; // Allow BullMQ retry strategy
             }
         }
