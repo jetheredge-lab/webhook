@@ -20,7 +20,7 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 
 const buildServer = () => {
-    const app = fastify({ logger: false });
+    const app = fastify({ logger: false, ignoreTrailingSlash: true });
 
     app.register(cors, { origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'] });
     app.register(helmet, {
@@ -56,6 +56,12 @@ const buildServer = () => {
     app.register(accountRoutes, { prefix: '/api/accounts' });
     app.register(tradeRoutes, { prefix: '/api/trades' });
     app.register(equityRoutes, { prefix: '/api/equity' });
+
+    // Global 404 handler for debugging stealth webhooks
+    app.setNotFoundHandler(async (request, reply) => {
+        logger.warn(`404 Not Found triggered by: ${request.method} ${request.url}`);
+        return reply.status(404).send({ error: `Route ${request.method}:${request.url} not found` });
+    });
 
     return app;
 };
