@@ -30,12 +30,18 @@ export class TradovateSocketService {
         }
     }
 
+    private retryCounts: Map<string, number> = new Map();
+
     /**
      * Connect and authorize a per-account Tradovate Socket session
      */
-    async connectSocket(accountId: string) {
+    async asyncConnectSocket(accountId: string) {
         if (this.sockets.has(accountId)) {
-            this.sockets.get(accountId)?.close();
+            const oldWs = this.sockets.get(accountId);
+            if (oldWs?.readyState !== WebSocket.CLOSED) {
+                oldWs?.close();
+            }
+            this.sockets.delete(accountId);
         }
 
         const account = await prisma.account.findUnique({ where: { id: accountId } });
@@ -46,9 +52,11 @@ export class TradovateSocketService {
             const wsUrl = account.type === AccountType.LIVE ? config.TRADOVATE_WS_URL_LIVE : config.TRADOVATE_WS_URL_DEMO;
 
             const ws = new WebSocket(wsUrl);
+            this.sockets.set(accountId, ws);
 
             ws.on('open', () => {
                 logger.info(`Tradovate WebSocket connected for account: ${account.accountSpec}`);
+                this.retryCounts.set(accountId, 0); // Reset on success
 
                 // Authorization message payload
                 const authPayload = `authorize\n1\n\n${token}`;
@@ -66,6 +74,11 @@ export class TradovateSocketService {
                     try {
                         const payloads = JSON.parse(payloadString);
                         for (const p of payloads) {
+                            if (p.s === 401) {
+                                logger.error(`Socket Auth Rejected for ${account.accountSpec}: ${JSON.stringify(p.d)}`);
+                                ws.close();
+                                return;
+                            }
                             this.handleEventResponse(accountId, p);
                         }
                     } catch (e: any) {
@@ -74,19 +87,43 @@ export class TradovateSocketService {
                 }
             });
 
-            ws.on('close', () => {
-                logger.warn(`WebSocket closed for ${account.accountSpec}. Reconnecting in 5s...`);
-                setTimeout(() => this.connectSocket(accountId), 5000); // Reconnection hook
+            ws.on('close', (code, reason) => {
+                const currentRetry = this.retryCounts.get(accountId) || 0;
+                // Avoid retrying if it's a permanent auth failure or if we've crashed too many times
+                if (currentRetry > 10) {
+                    logger.error(`Stopping Socket retries for ${account.accountSpec} after 10 attempts.`);
+                    return;
+                }
+
+                const delay = Math.min(1000 * Math.pow(2, currentRetry), 300000); // Max 5 mins
+                logger.warn(`WebSocket closed for ${account.accountSpec} (Code: ${code}). Retrying in ${delay / 1000}s...`);
+
+                this.retryCounts.set(accountId, currentRetry + 1);
+                setTimeout(() => this.asyncConnectSocket(accountId), delay);
             });
 
-            ws.on('error', (err) => {
-                logger.error(err, `WebSocket error for ${account.accountSpec}:`);
+            ws.on('error', (err: any) => {
+                // 429 or connection errors land here
+                logger.error({ err: err.message || err }, `WebSocket error for ${account.accountSpec}:`);
             });
 
-            this.sockets.set(accountId, ws);
-        } catch (error) {
-            logger.error(`Failed to authorize Tradovate WS for account ${accountId}`);
+        } catch (error: any) {
+            const status = error.response?.status;
+            logger.error(`Failed to authorize Tradovate WS for account ${accountId}: ${error.message}`);
+
+            // If it's a 401, don't immediately retry every 5s, it's a credential issue
+            if (status !== 401) {
+                const currentRetry = this.retryCounts.get(accountId) || 0;
+                const delay = Math.min(1000 * Math.pow(2, currentRetry), 60000);
+                this.retryCounts.set(accountId, currentRetry + 1);
+                setTimeout(() => this.asyncConnectSocket(accountId), delay);
+            }
         }
+    }
+
+    // Wrap to match original interface
+    async connectSocket(accountId: string) {
+        return this.asyncConnectSocket(accountId);
     }
 
     handleEventResponse(accountId: string, eventObj: any) {

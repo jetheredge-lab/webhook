@@ -81,8 +81,8 @@ export default async function accountRoutes(fastify: FastifyInstance) {
         const body = request.body as any;
         try {
             const isDemo = body.type !== 'LIVE';
-            await TradovateAuthService.testCredentials(body.apiKey, body.apiSecret, isDemo);
-            return reply.send({ success: true, message: 'Credentials Verified!' });
+            const accounts = await TradovateAuthService.testCredentials(body.apiKey, body.apiSecret, isDemo);
+            return reply.send({ success: true, message: 'Credentials Verified!', data: accounts });
         } catch (e: any) {
             return reply.status(401).send({
                 success: false,

@@ -43,11 +43,18 @@ export class TradovateOrderService {
     static async placeOrder(systemAccountId: string, payload: PlaceOrderPayload) {
         try {
             const dbAccount = await prisma.account.findUnique({ where: { id: systemAccountId } });
+            if (!dbAccount) throw new Error('Account not found');
+
+            const tradovateId = Number(dbAccount.tradovateAccountId);
+            if (isNaN(tradovateId)) {
+                throw new Error(`Invalid Tradovate Account ID: "${dbAccount.tradovateAccountId}". This must be the numerical ID, not the spec or name.`);
+            }
+
             const client = await this._client(systemAccountId);
 
             const res = await client.post('/order/placeorder', {
-                accountSpec: dbAccount?.accountSpec,
-                accountId: Number(dbAccount?.tradovateAccountId),
+                accountSpec: dbAccount.accountSpec,
+                accountId: tradovateId,
                 action: payload.action,
                 symbol: payload.symbol,
                 orderQty: payload.orderQty,

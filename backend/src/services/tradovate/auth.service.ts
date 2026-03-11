@@ -78,12 +78,12 @@ export class TradovateAuthService {
     }
 
     /**
-     * Test credentials without needing a DB entry
+     * Test credentials and return available accounts
      */
-    static async testCredentials(name: string, password: string, isDemo: boolean): Promise<boolean> {
+    static async testCredentials(name: string, password: string, isDemo: boolean): Promise<any[]> {
         const apiUrl = isDemo ? config.TRADOVATE_API_URL_DEMO : config.TRADOVATE_API_URL_LIVE;
         try {
-            await axios.post(`${apiUrl}/auth/accesstokenrequest`, {
+            const authRes = await axios.post(`${apiUrl}/auth/accesstokenrequest`, {
                 name,
                 password,
                 appId: 'SampleApp',
@@ -91,7 +91,16 @@ export class TradovateAuthService {
                 cid: 0,
                 sec: 'change_me'
             });
-            return true;
+
+            const token = authRes.data.accessToken;
+
+            // Fetch accounts list to verify and show to user
+            const syncRes = await axios.post(`${apiUrl}/user/syncrequest`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            return syncRes.data.accounts || [];
+
         } catch (error: any) {
             logger.error(error.response?.data || error, 'Credential test failed:');
             throw error;
