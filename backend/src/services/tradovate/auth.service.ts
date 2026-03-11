@@ -36,10 +36,10 @@ export class TradovateAuthService {
             const response = await axios.post(`${apiUrl}/auth/accesstokenrequest`, {
                 name: account.apiKey,
                 password: decryptedSecret,
-                appId: '',
-                appVersion: '',
+                appId: 'SampleApp',
+                appVersion: '1.0',
                 cid: 0,
-                sec: ''
+                sec: 'change_me'
             });
 
             const token = response.data.accessToken;
@@ -86,10 +86,10 @@ export class TradovateAuthService {
             await axios.post(`${apiUrl}/auth/accesstokenrequest`, {
                 name,
                 password,
-                appId: '',
-                appVersion: '',
+                appId: 'SampleApp',
+                appVersion: '1.0',
                 cid: 0,
-                sec: ''
+                sec: 'change_me'
             });
             return true;
         } catch (error: any) {
